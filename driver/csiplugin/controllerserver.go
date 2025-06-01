@@ -3486,7 +3486,7 @@ func (cs *ScaleControllerServer) getSnapRestoreSize(ctx context.Context, conn co
 	}
 
 	// REST API returns block limit in kb, convert it to bytes and return
-	return int64(quotaResp.BlockLimit * 1024), nil
+	return int64(quotaResp.BlockLimit * 1000), nil
 }
 
 func (cs *ScaleControllerServer) isExistingSnapUseableForVol(ctx context.Context, conn connectors.SpectrumScaleConnector, filesystemName string, consistencyGroup string, filesetName string, cgSnapName string) (bool, error) {
