@@ -183,13 +183,13 @@ func ConvertToBytes(inputStr string) (uint64, error) {
 	case "b", "bytes":
 		/* Nothing to do here */
 	case "k", "kb", "kilobytes", "kilobyte":
-		retValue *= 1000
+		retValue *= 1024
 	case "m", "mb", "megabytes", "megabyte":
-		retValue *= (1000 * 1000)
+		retValue *= (1024 * 1024)
 	case "g", "gb", "gigabytes", "gigabyte":
-		retValue *= (1000 * 1000 * 1000)
+		retValue *= (1024 * 1024 * 1024)
 	case "t", "tb", "terabytes", "terabyte":
-		retValue *= (1000 * 1000 * 1000 * 1000)
+		retValue *= (1024 * 1024 * 1024 * 1024)
 	default:
 		return 0, fmt.Errorf("invalid Unit %v supplied with %v", unit, inputStr)
 	}
