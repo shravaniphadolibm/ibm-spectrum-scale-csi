@@ -577,8 +577,8 @@ func ConvertToBytes(inputStr string) (uint64, error) {
 	case "m", "mb", "megabytes", "megabyte":
 		retValue *= (1024 * 1024)
 	case "g", "gb", "gigabytes", "gigabyte":
-		//retValue *= (1024 * 1024 * 1024)
-		retValue *= 1000000000
+		retValue *= (1024 * 1024 * 1024)
+
 	case "t", "tb", "terabytes", "terabyte":
 		retValue *= (1024 * 1024 * 1024 * 1024)
 	default:

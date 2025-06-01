@@ -183,13 +183,13 @@ func ConvertToBytes(inputStr string) (uint64, error) {
 	case "b", "bytes":
 		/* Nothing to do here */
 	case "k", "kb", "kilobytes", "kilobyte":
-		retValue *= 1024
+		retValue *= 1000
 	case "m", "mb", "megabytes", "megabyte":
-		retValue *= (1024 * 1024)
+		retValue *= (1000 * 1000)
 	case "g", "gb", "gigabytes", "gigabyte":
-		retValue *= (1024 * 1024 * 1024)
+		retValue *= (1000 * 1000 * 1000)
 	case "t", "tb", "terabytes", "terabyte":
-		retValue *= (1024 * 1024 * 1024 * 1024)
+		retValue *= (1000 * 1000 * 1000 * 1000)
 	default:
 		return 0, fmt.Errorf("invalid Unit %v supplied with %v", unit, inputStr)
 	}
@@ -218,11 +218,11 @@ func FsStatInfo(path string) (int64, int64, int64, int64, int64, int64, error) {
 	if err != nil {
 		return 0, 0, 0, 0, 0, 0, err
 	}
-	available := int64(statfs.Bavail) * int64(statfs.Bsize) // #nosec G115 -- false positive
-	capacity := int64(statfs.Blocks) * int64(statfs.Bsize) // #nosec G115 -- false positive
+	available := int64(statfs.Bavail) * int64(statfs.Bsize)                     // #nosec G115 -- false positive
+	capacity := int64(statfs.Blocks) * int64(statfs.Bsize)                      // #nosec G115 -- false positive
 	usage := (int64(statfs.Blocks) - int64(statfs.Bfree)) * int64(statfs.Bsize) // #nosec G115 -- false positive
-	inodes := int64(statfs.Files) // #nosec G115 -- false positive
-	inodesFree := int64(statfs.Ffree) // #nosec G115 -- false positive
+	inodes := int64(statfs.Files)                                               // #nosec G115 -- false positive
+	inodesFree := int64(statfs.Ffree)                                           // #nosec G115 -- false positive
 	inodesUsed := inodes - inodesFree
 
 	return available, capacity, usage, inodes, inodesFree, inodesUsed, nil
@@ -244,7 +244,6 @@ func GetExecutionTime() int64 {
 	return timeinMilliSec
 }
 
-
 func SetModuleName(ctx context.Context, name string) context.Context {
 	return context.WithValue(ctx, moduleName, name)
 }
@@ -253,4 +252,3 @@ func GetModuleName(ctx context.Context) string {
 	moduleName, _ := ctx.Value(moduleName).(string)
 	return moduleName
 }
-
