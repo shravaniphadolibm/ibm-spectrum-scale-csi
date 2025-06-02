@@ -3486,6 +3486,7 @@ func (cs *ScaleControllerServer) getSnapRestoreSize(ctx context.Context, conn co
 	}
 
 	// REST API returns block limit in kb, convert it to bytes and return
+	// 1kb = 1000 bytes
 	return int64(quotaResp.BlockLimit * 1000), nil
 }
 
