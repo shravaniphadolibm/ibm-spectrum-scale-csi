@@ -183,7 +183,7 @@ func ConvertToBytes(inputStr string) (uint64, error) {
 	case "b", "bytes":
 		/* Nothing to do here */
 	case "k", "kb", "kilobytes", "kilobyte":
-		retValue *= 1024
+		retValue *= 1000
 	case "m", "mb", "megabytes", "megabyte":
 		retValue *= (1024 * 1024)
 	case "g", "gb", "gigabytes", "gigabyte":

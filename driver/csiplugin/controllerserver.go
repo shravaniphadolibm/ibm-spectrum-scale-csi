@@ -265,6 +265,8 @@ func (cs *ScaleControllerServer) setQuota(ctx context.Context, scVol *scaleVolum
 	}
 
 	filesetQuotaBytes, err := ConvertToBytes(quota)
+	// printing thr filesetQuotabytes
+	klog.V(4).Infof("[%s] volume: [%v] - ControllerServer:setQuota: filesetQuotaBytes: [%v]", loggerId, volName, filesetQuotaBytes)
 	if err != nil {
 		if strings.Contains(err.Error(), "invalid number specified") {
 			// Invalid number specified means quota is not set
@@ -1307,6 +1309,8 @@ func (cs *ScaleControllerServer) createStaticBasedVol(ctx context.Context, scVol
 			return "", status.Error(codes.Internal, fmt.Sprintf("unable to list quota for fileset [%v] in filesystem [%v]. Error [%v]", filesetName, scVol.VolBackendFs, err))
 		}
 		filesetQuotaBytes, err := ConvertToBytes(quota)
+		// logging the fileset quota
+		klog.V(4).Infof("[%s] volume: [%v] - ControllerServer:getTargetPath: fileset quota: [%v]", utils.GetLoggerId(ctx), filesetQuotaBytes, quota)
 		if err != nil {
 			klog.Errorf("[%s] createStaticBasedVol: unable to convert quota for fileset [%v] in filesystem [%v]. Error [%v]", loggerId, filesetName, scVol.VolBackendFs, err)
 			return "", status.Error(codes.Internal, fmt.Sprintf("unable to convert quota for fileset [%v] in filesystem [%v] or Check whether quota is set properly for the fileset. Error [%v]", filesetName, scVol.VolBackendFs, err))
@@ -3327,6 +3331,10 @@ func (cs *ScaleControllerServer) CreateSnapshot(newctx context.Context, req *csi
 		return nil, err
 	}
 	restoreSize, err := cs.getSnapRestoreSize(ctx, conn, filesystemName, filesetResp.FilesetName)
+
+	// printing the snapshot restore size
+	klog.Info("Restore size", "size", restoreSize)
+
 	if err != nil {
 		klog.Errorf("[%s] Error getting the snapshot restore size for snapshot %s:%s:%s", loggerId, filesystemName, filesetResp.FilesetName, snapName)
 		return nil, err
@@ -3487,7 +3495,8 @@ func (cs *ScaleControllerServer) getSnapRestoreSize(ctx context.Context, conn co
 
 	// REST API returns block limit in kb, convert it to bytes and return
 	// 1kb = 1000 bytes
-	return int64(quotaResp.BlockLimit * 1000), nil
+	klog.Info("Restore size", "size", int64(quotaResp.BlockLimit*1024))
+	return int64(quotaResp.BlockLimit * 1024), nil
 }
 
 func (cs *ScaleControllerServer) isExistingSnapUseableForVol(ctx context.Context, conn connectors.SpectrumScaleConnector, filesystemName string, consistencyGroup string, filesetName string, cgSnapName string) (bool, error) {
@@ -3793,6 +3802,8 @@ func (cs *ScaleControllerServer) ControllerExpandVolume(ctx context.Context, req
 	}
 
 	filesetQuotaBytes, err := ConvertToBytes(quota)
+	// printing the filesetQuotabytes
+	klog.V(4).Infof("[%s] volume: [%v] - ControllerServer:setQuota: filesetQuotaBytes: [%v]", loggerId, filesetQuotaBytes, quota)
 	if err != nil {
 		klog.Errorf("[%s] unable to convert quota for fileset [%v] in filesystem [%v]. Error [%v]", loggerId, filesetName, filesystemName, err)
 		return nil, status.Error(codes.Internal, fmt.Sprintf("unable to convert quota for fileset [%v] in filesystem [%v]. Error [%v]", filesetName, filesystemName, err))
