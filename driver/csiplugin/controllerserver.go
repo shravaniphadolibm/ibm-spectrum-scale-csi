@@ -29,7 +29,6 @@ import (
 
 	"github.com/IBM/ibm-spectrum-scale-csi/driver/csiplugin/connectors"
 
-	
 	"github.com/IBM/ibm-spectrum-scale-csi/driver/csiplugin/settings"
 	"github.com/IBM/ibm-spectrum-scale-csi/driver/csiplugin/utils"
 	"github.com/container-storage-interface/spec/lib/go/csi"
@@ -904,18 +903,14 @@ func (cs *ScaleControllerServer) CreateVolume(newctx context.Context, req *csi.C
 	/* Get volume size in bytes */
 	volSize := cs.getVolumeSizeInBytes(req)
 
-	//getting the filesystem name 
+	//getting the filesystem name
 	filesystemName, err := conn.GetFilesystemName(ctx, volumeIDMembers.FsUUID)
-    // getting filesystem block info 
-	filesystemdetails, err := conn.GetFilesystemDetails(ctx,filesystemName)
+	// getting filesystem block info
+	filesystemdetails, err := conn.GetFilesystemDetails(ctx, filesystemName)
 
-	blockinfo := filesystemdetails.block 
+	blockinfo := filesystemdetails.block
 	// add the formula here
 	volsize := int(math.round(volsize/blockinfo)) * blockinfo
-
-
-
-
 
 	reqCapabilities := req.GetVolumeCapabilities()
 	if reqCapabilities == nil {
@@ -1916,9 +1911,7 @@ func (cs *ScaleControllerServer) assembledScaleVersion(ctx context.Context, conn
 	// "serverVersion" : "5.1.1.1-developer build",
 	splitScaleVer := strings.Split(scaleVersion, ".")
 	if len(splitScaleVer) < 3 {
-		return assembledScaleVer, status.Error(codes.Internal, fmt.Sprintf("invalid IBM 
-		
-		Scale version - %s", scaleVersion))
+		return assembledScaleVer, status.Error(codes.Internal, fmt.Sprintf("invalid IBM Scale version - %s", scaleVersion))
 	}
 	var splitMinorVer []string
 	if len(splitScaleVer) == 4 {
@@ -3762,16 +3755,15 @@ func (cs *ScaleControllerServer) ControllerExpandVolume(ctx context.Context, req
 	}
 	capacity := uint64(capRange.GetRequiredBytes()) // #nosec G115 -- false positive
 
-	//getting the filesystem name 
-	// add new formula here 
+	//getting the filesystem name
+	// add new formula here
 	filesystemName, err := conn.GetFilesystemName(ctx, volumeIDMembers.FsUUID)
 
-	filesystemdetails, err := conn.GetFilesystemDetails(ctx,filesystemName)
+	filesystemdetails, err := conn.GetFilesystemDetails(ctx, filesystemName)
 
-	blockinfo := filesystemdetails.block 
+	blockinfo := filesystemdetails.block
 	// add the formula here
 	capacity := int(math.round(capacity/blockinfo)) * blockinfo
-
 
 	volumeIDMembers, err := getVolIDMembers(volID)
 
