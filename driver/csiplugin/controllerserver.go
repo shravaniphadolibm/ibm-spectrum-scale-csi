@@ -75,8 +75,7 @@ func (cs *ScaleControllerServer) IfSameVolReqInProcess(scVol *scaleVolume) (bool
 	capacity, volpresent := cs.Driver.reqmap[scVol.VolName]
 	if volpresent {
 		/*  #nosec G115 -- false positive  */
-		// capacity can be greater than equal to volsize
-		if capacity <= int64(scVol.VolSize) {
+		if capacity == int64(scVol.VolSize) {
 			return true, nil
 		} else {
 			return false, status.Error(codes.Internal, fmt.Sprintf("Volume %v present in map but requested size %v does not match with size %v in map", scVol.VolName, scVol.VolSize, capacity))
@@ -1181,17 +1180,17 @@ func (cs *ScaleControllerServer) CreateVolume(newctx context.Context, req *csi.C
 			return nil, status.Error(codes.InvalidArgument, "volume range is not provided")
 		}
 		capacity := uint64(capRange.GetRequiredBytes()) // #nosec G115 -- false positive
-		// changing capacity here
-		filesystemname := scaleVol.VolBackendFs
-		filesystemDetails, err := scaleVol.Connector.GetFilesystemDetails(ctx, filesystemname)
-		if err != nil {
-			klog.Errorf("[%s] Create Volume - unable to get filesystem details ", err)
-			return nil, status.Error(codes.Internal, fmt.Sprintf("CreateVolume - unable to get filesystem details for Filesystem", err))
-		}
-		blockinfo := filesystemDetails.Block.BlockSize
-		roundedblock := uint64(math.Round(float64(capacity) / float64(blockinfo)))
-		capacity = roundedblock * uint64(blockinfo)
-		klog.Info("new capacity", capacity)
+		// // changing capacity here
+		// filesystemname := scaleVol.VolBackendFs
+		// filesystemDetails, err := scaleVol.Connector.GetFilesystemDetails(ctx, filesystemname)
+		// if err != nil {
+		// 	klog.Errorf("[%s] Create Volume - unable to get filesystem details ", err)
+		// 	return nil, status.Error(codes.Internal, fmt.Sprintf("CreateVolume - unable to get filesystem details for Filesystem", err))
+		// }
+		// blockinfo := filesystemDetails.Block.BlockSize
+		// roundedblock := uint64(math.Round(float64(capacity) / float64(blockinfo)))
+		// capacity = roundedblock * uint64(blockinfo)
+		// klog.Info("new capacity", capacity)
 
 		targetPath, err = cs.createStaticBasedVol(ctx, scaleVol, filesetName, capacity)
 	} else if scaleVol.IsFilesetBased {
@@ -1407,6 +1406,7 @@ func (cs *ScaleControllerServer) setScaleVolume(ctx context.Context, req *csi.Cr
 		scaleVol.VolSize = smallestVolSize
 	} else {
 		scaleVol.VolSize = uint64(volSize) // #nosec G115 -- false positive
+
 	}
 
 	/* Get details for Primary Cluster */
