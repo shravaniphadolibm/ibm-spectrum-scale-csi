@@ -664,6 +664,8 @@ func (cs *ScaleControllerServer) createFilesetVol(ctx context.Context, scVol *sc
 		}
 	}
 	targetBasePath := ""
+	// changing the quota
+
 	if !isCGIndependentFset {
 		if scVol.VolSize != 0 {
 			err = cs.setQuota(ctx, scVol, volName)
@@ -1187,6 +1189,7 @@ func (cs *ScaleControllerServer) CreateVolume(newctx context.Context, req *csi.C
 		blockinfo := filesystemDetails.Block.BlockSize
 		roundedblock := uint64(math.Round(float64(capacity) / float64(blockinfo)))
 		capacity = roundedblock * uint64(blockinfo)
+		klog.Info("new capacity", capacity)
 
 		targetPath, err = cs.createStaticBasedVol(ctx, scaleVol, filesetName, capacity)
 	} else if scaleVol.IsFilesetBased {
@@ -1380,7 +1383,8 @@ func (cs *ScaleControllerServer) setScaleVolume(ctx context.Context, req *csi.Cr
 	}
 	scaleVol.VolName = volName
 	//changing the volsize
-	filesystemname := req.GetParameters()["fstype"]
+	//getting the filesystemname
+	filesystemname := scaleVol.VolBackendFs
 	klog.Info("Filesystemname", filesystemname)
 	filesystemdetails, err := cs.Driver.connmap["primary"].GetFilesystemDetails(ctx, filesystemname)
 	if err != nil {
