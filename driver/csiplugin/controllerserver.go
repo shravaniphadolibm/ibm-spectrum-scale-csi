@@ -75,7 +75,8 @@ func (cs *ScaleControllerServer) IfSameVolReqInProcess(scVol *scaleVolume) (bool
 	capacity, volpresent := cs.Driver.reqmap[scVol.VolName]
 	if volpresent {
 		/*  #nosec G115 -- false positive  */
-		if capacity == int64(scVol.VolSize) {
+		// capacity can be greater than equal to volsize
+		if capacity >= int64(scVol.VolSize) {
 			return true, nil
 		} else {
 			return false, status.Error(codes.Internal, fmt.Sprintf("Volume %v present in map but requested size %v does not match with size %v in map", scVol.VolName, scVol.VolSize, capacity))
@@ -728,6 +729,7 @@ func handleUpdateComment(ctx context.Context, scVol *scaleVolume, setAfmAttribut
 
 func (cs *ScaleControllerServer) getVolumeSizeInBytes(req *csi.CreateVolumeRequest) int64 {
 	capacity := req.GetCapacityRange()
+
 	return capacity.GetRequiredBytes()
 }
 
