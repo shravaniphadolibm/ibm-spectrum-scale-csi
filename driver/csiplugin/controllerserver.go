@@ -3983,7 +3983,7 @@ func (cs *ScaleControllerServer) ControllerExpandVolume(ctx context.Context, req
 		return nil, status.Error(codes.InvalidArgument, "capacity range not provided")
 	}
 	capacity := uint64(capRange.GetRequiredBytes()) // #nosec G115 -- false positive
-
+	// change here
 	volumeIDMembers, err := getVolIDMembers(volID)
 
 	if err != nil {
