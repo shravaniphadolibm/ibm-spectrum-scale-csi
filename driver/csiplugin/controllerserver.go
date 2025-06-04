@@ -1381,10 +1381,12 @@ func (cs *ScaleControllerServer) setScaleVolume(ctx context.Context, req *csi.Cr
 	scaleVol.VolName = volName
 	//changing the volsize
 	filesystemname := req.GetParameters()["fstype"]
-	filesystemdetails, err := scaleVol.Connector.GetFilesystemDetails(ctx, filesystemname)
+	klog.Info("Filesystemname", filesystemname)
+	filesystemdetails, err := cs.Driver.connmap["primary"].GetFilesystemDetails(ctx, filesystemname)
 	if err != nil {
 		klog.Errorf("Unable to get the filesystemdetails")
 	}
+	klog.Info("filesystem details", filesystemdetails)
 	blockinfo := filesystemdetails.Block.BlockSize
 	roundedblock := int64(math.Round(float64(volSize) / float64(blockinfo)))
 	volSize = roundedblock * int64(blockinfo)
