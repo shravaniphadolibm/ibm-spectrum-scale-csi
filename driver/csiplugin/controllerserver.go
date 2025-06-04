@@ -76,7 +76,7 @@ func (cs *ScaleControllerServer) IfSameVolReqInProcess(scVol *scaleVolume) (bool
 	if volpresent {
 		/*  #nosec G115 -- false positive  */
 		// capacity can be greater than equal to volsize
-		if capacity >= int64(scVol.VolSize) {
+		if capacity <= int64(scVol.VolSize) {
 			return true, nil
 		} else {
 			return false, status.Error(codes.Internal, fmt.Sprintf("Volume %v present in map but requested size %v does not match with size %v in map", scVol.VolName, scVol.VolSize, capacity))
