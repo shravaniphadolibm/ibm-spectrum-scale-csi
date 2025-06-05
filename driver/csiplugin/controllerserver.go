@@ -269,6 +269,7 @@ func (cs *ScaleControllerServer) setQuota(ctx context.Context, scVol *scaleVolum
 	}
 
 	filesetQuotaBytes, err := ConvertToBytes(quota)
+	//filese
 	if err != nil {
 		if strings.Contains(err.Error(), "invalid number specified") {
 			// Invalid number specified means quota is not set
@@ -277,6 +278,17 @@ func (cs *ScaleControllerServer) setQuota(ctx context.Context, scVol *scaleVolum
 			return fmt.Errorf("unable to convert quota for fileset [%v] in filesystem [%v]. Error [%v]", volName, scVol.VolBackendFs, err)
 		}
 	}
+
+	filesystemname := scVol.VolBackendFs
+	klog.Info("Filesystemname", filesystemname)
+	filesystemdetails, err := cs.Driver.connmap["primary"].GetFilesystemDetails(ctx, filesystemname)
+	if err != nil {
+		klog.Errorf("Unable to get the filesystemdetails")
+	}
+	klog.Info("filesystem details", filesystemdetails)
+	blockinfo := filesystemdetails.Block.BlockSize
+	roundedblock := uint64(math.Round(float64(scVol.VolSize) / float64(blockinfo)))
+	scVol.VolSize = roundedblock * uint64(blockinfo)
 
 	if filesetQuotaBytes != scVol.VolSize {
 		var hardLimit, softLimit string
