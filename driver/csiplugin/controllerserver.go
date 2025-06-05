@@ -73,9 +73,10 @@ type ScaleControllerServer struct {
 
 func (cs *ScaleControllerServer) IfSameVolReqInProcess(scVol *scaleVolume) (bool, error) {
 	capacity, volpresent := cs.Driver.reqmap[scVol.VolName]
+
 	if volpresent {
 		/*  #nosec G115 -- false positive  */
-		if capacity == int64(scVol.VolSize) {
+		if int64(scVol.VolSize) <= capacity {
 			return true, nil
 		} else {
 			return false, status.Error(codes.Internal, fmt.Sprintf("Volume %v present in map but requested size %v does not match with size %v in map", scVol.VolName, scVol.VolSize, capacity))
