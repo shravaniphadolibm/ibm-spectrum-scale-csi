@@ -76,7 +76,7 @@ func (cs *ScaleControllerServer) IfSameVolReqInProcess(scVol *scaleVolume) (bool
 
 	if volpresent {
 		/*  #nosec G115 -- false positive  */
-		if int64(scVol.VolSize) <= capacity {
+		if int64(scVol.VolSize) == capacity {
 			return true, nil
 		} else {
 			return false, status.Error(codes.Internal, fmt.Sprintf("Volume %v present in map but requested size %v does not match with size %v in map", scVol.VolName, scVol.VolSize, capacity))
@@ -741,8 +741,36 @@ func handleUpdateComment(ctx context.Context, scVol *scaleVolume, setAfmAttribut
 
 func (cs *ScaleControllerServer) getVolumeSizeInBytes(req *csi.CreateVolumeRequest) int64 {
 	capacity := req.GetCapacityRange()
-
-	return capacity.GetRequiredBytes()
+	// checking if capacity is in Binary bytes format
+	requiredBytes := capacity.GetRequiredBytes()
+	if requiredBytes%1024 == 0 {
+		return requiredBytes
+	} else {
+		capacityStr := req.GetCapacityRange().String() // Convert capacity to string for processing
+		capacityStr = strings.ToLower(strings.TrimSpace(capacityStr))
+		if len(capacityStr) > 1 {
+			unit := capacityStr[len(capacityStr)-1]
+			value, err := strconv.ParseFloat(capacityStr[:len(capacityStr)-1], 64)
+			if err == nil {
+				switch unit {
+				case 'k', 'K': // Kilobytes
+					requiredBytes = int64(value * 1024)
+				case 'm', 'M': // Megabytes
+					requiredBytes = int64(value * 1024 * 1024)
+				case 'g', 'G': // Gigabytes
+					requiredBytes = int64(value * 1024 * 1024 * 1024)
+				case 't', 'T': // Terabytes
+					requiredBytes = int64(value * 1024 * 1024 * 1024 * 1024)
+				default:
+					klog.Errorf("Unsupported unit in capacity: %s", capacityStr)
+				}
+			} else {
+				klog.Errorf("Invalid capacity value: %s", capacityStr)
+			}
+		}
+	}
+	// If requiredBytes is 0, check for unit-based capacity in parameters
+	return requiredBytes
 }
 
 func updateComment(ctx context.Context, scVol *scaleVolume, setAfmAttributes bool, afmTuningParams map[string]interface{}) error {
@@ -1398,16 +1426,16 @@ func (cs *ScaleControllerServer) setScaleVolume(ctx context.Context, req *csi.Cr
 	scaleVol.VolName = volName
 	//changing the volsize
 	//getting the filesystemname
-	filesystemname := scaleVol.VolBackendFs
-	klog.Info("Filesystemname", filesystemname)
-	filesystemdetails, err := cs.Driver.connmap["primary"].GetFilesystemDetails(ctx, filesystemname)
-	if err != nil {
-		klog.Errorf("Unable to get the filesystemdetails")
-	}
-	klog.Info("filesystem details", filesystemdetails)
-	blockinfo := filesystemdetails.Block.BlockSize
-	roundedblock := int64(math.Round(float64(volSize) / float64(blockinfo)))
-	volSize = roundedblock * int64(blockinfo)
+	// filesystemname := scaleVol.VolBackendFs
+	// klog.Info("Filesystemname", filesystemname)
+	// filesystemdetails, err := cs.Driver.connmap["primary"].GetFilesystemDetails(ctx, filesystemname)
+	// if err != nil {
+	// 	klog.Errorf("Unable to get the filesystemdetails")
+	// }
+	// klog.Info("filesystem details", filesystemdetails)
+	// blockinfo := filesystemdetails.Block.BlockSize
+	// roundedblock := int64(math.Round(float64(volSize) / float64(blockinfo)))
+	// volSize = roundedblock * int64(blockinfo)
 
 	// #nosec G115 -- false positive
 	if uint64(volSize) > maximumPVSize { // larger than allowed pv size not allowed
@@ -4060,14 +4088,14 @@ func (cs *ScaleControllerServer) ControllerExpandVolume(ctx context.Context, req
 		return nil, status.Error(codes.Internal, fmt.Sprintf("ControllerExpandVolume - unable to get filesystem Name for Filesystem Uid [%v] and clusterId [%v]. Error [%v]", volumeIDMembers.FsUUID, volumeIDMembers.ClusterId, err))
 	}
 	// updating the capacity
-	filesystemdetails, err := conn.GetFilesystemDetails(ctx, filesystemName)
-	if err != nil {
-		klog.Errorf("[%s] ControllerExpandVolume - unable to get filesystem details for Filesystem Uid [%v] and clusterId [%v]. Error [%v]", loggerId, volumeIDMembers.FsUUID, volumeIDMembers.ClusterId, err)
-		return nil, status.Error(codes.Internal, fmt.Sprintf("ControllerExpandVolume - unable to get filesystem details for Filesystem Uid [%v] and clusterId [%v]. Error [%v]", volumeIDMembers.FsUUID, volumeIDMembers.ClusterId, err))
-	}
-	blockinfo := filesystemdetails.Block.BlockSize
-	roundedblock := uint64(math.Round(float64(capacity) / float64(blockinfo)))
-	capacity = roundedblock * uint64(blockinfo)
+	// filesystemdetails, err := conn.GetFilesystemDetails(ctx, filesystemName)
+	// if err != nil {
+	// 	klog.Errorf("[%s] ControllerExpandVolume - unable to get filesystem details for Filesystem Uid [%v] and clusterId [%v]. Error [%v]", loggerId, volumeIDMembers.FsUUID, volumeIDMembers.ClusterId, err)
+	// 	return nil, status.Error(codes.Internal, fmt.Sprintf("ControllerExpandVolume - unable to get filesystem details for Filesystem Uid [%v] and clusterId [%v]. Error [%v]", volumeIDMembers.FsUUID, volumeIDMembers.ClusterId, err))
+	// }
+	// blockinfo := filesystemdetails.Block.BlockSize
+	// roundedblock := uint64(math.Round(float64(capacity) / float64(blockinfo)))
+	// capacity = roundedblock * uint64(blockinfo)
 
 	filesetName := volumeIDMembers.FsetName
 
