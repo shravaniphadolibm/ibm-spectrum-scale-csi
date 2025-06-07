@@ -1111,8 +1111,9 @@ func (cs *ScaleControllerServer) CreateVolume(newctx context.Context, req *csi.C
 
 		return &csi.CreateVolumeResponse{
 			Volume: &csi.Volume{
-				VolumeId:      volID,
-				CapacityBytes: int64(scaleVol.VolSize), // #nosec G115 -- false positive
+				VolumeId: volID,
+				//CapacityBytes: int64(scaleVol.VolSize), // #nosec G115 -- false positive
+				CapacityBytes: req.GetCapacityRange().GetRequiredBytes(),
 				VolumeContext: req.GetParameters(),
 				ContentSource: volSrc,
 			},
@@ -1259,8 +1260,9 @@ func (cs *ScaleControllerServer) CreateVolume(newctx context.Context, req *csi.C
 
 	return &csi.CreateVolumeResponse{
 		Volume: &csi.Volume{
-			VolumeId:      volID,
-			CapacityBytes: int64(scaleVol.VolSize), // #nosec G115 -- false positive
+			VolumeId: volID,
+			//CapacityBytes: int64(scaleVol.VolSize), // #nosec G115 -- false positive
+			CapacityBytes: req.GetCapacityRange().GetRequiredBytes(),
 			VolumeContext: req.GetParameters(),
 			ContentSource: volSrc,
 		},
