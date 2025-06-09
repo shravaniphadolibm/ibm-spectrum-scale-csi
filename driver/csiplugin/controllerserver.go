@@ -289,7 +289,7 @@ func (cs *ScaleControllerServer) setQuota(ctx context.Context, scVol *scaleVolum
 	}
 	klog.Info("filesystem details", filesystemdetails)
 	blockinfo := filesystemdetails.Block.BlockSize
-	roundedblock := uint64(math.Round(float64(scVol.VolSize) / float64(blockinfo)))
+	roundedblock := uint64(math.Floor(float64(scVol.VolSize) / float64(blockinfo)))
 	scVol.VolSize = roundedblock * uint64(blockinfo)
 
 	if filesetQuotaBytes != scVol.VolSize {
@@ -1111,9 +1111,9 @@ func (cs *ScaleControllerServer) CreateVolume(newctx context.Context, req *csi.C
 
 		return &csi.CreateVolumeResponse{
 			Volume: &csi.Volume{
-				VolumeId:      volID,
-				CapacityBytes: int64(scaleVol.VolSize), // #nosec G115 -- false positive
-				//CapacityBytes: req.GetCapacityRange().GetRequiredBytes(),
+				VolumeId: volID,
+				//CapacityBytes: int64(scaleVol.VolSize), // #nosec G115 -- false positive
+				CapacityBytes: req.GetCapacityRange().GetRequiredBytes(),
 				VolumeContext: req.GetParameters(),
 				ContentSource: volSrc,
 			},
@@ -1135,15 +1135,15 @@ func (cs *ScaleControllerServer) CreateVolume(newctx context.Context, req *csi.C
 
 	}
 
-	// volReqInProcess, err := cs.IfSameVolReqInProcess(scaleVol)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	volReqInProcess, err := cs.IfSameVolReqInProcess(scaleVol)
+	if err != nil {
+		return nil, err
+	}
 
-	// if volReqInProcess {
-	// 	klog.Errorf("[%s] volume:[%v] - volume creation already in process ", loggerId, scaleVol.VolName)
-	// 	return nil, status.Error(codes.Aborted, fmt.Sprintf("volume creation already in process : %v", scaleVol.VolName))
-	// }
+	if volReqInProcess {
+		klog.Errorf("[%s] volume:[%v] - volume creation already in process ", loggerId, scaleVol.VolName)
+		return nil, status.Error(codes.Aborted, fmt.Sprintf("volume creation already in process : %v", scaleVol.VolName))
+	}
 
 	volResponse, err := cs.getCopyJobStatus(ctx, req, volSrc, scaleVol, isVolSource, isSnapSource, snapIdMembers)
 	if err != nil {
@@ -1203,7 +1203,7 @@ func (cs *ScaleControllerServer) CreateVolume(newctx context.Context, req *csi.C
 			return nil, status.Error(codes.Internal, fmt.Sprintf("CreateVolume - unable to get filesystem details for Filesystem", err))
 		}
 		blockinfo := filesystemDetails.Block.BlockSize
-		roundedblock := uint64(math.Round(float64(capacity) / float64(blockinfo)))
+		roundedblock := uint64(math.Floor(float64(capacity) / float64(blockinfo)))
 		capacity = roundedblock * uint64(blockinfo)
 		klog.Info("new capacity", capacity)
 
@@ -1260,9 +1260,9 @@ func (cs *ScaleControllerServer) CreateVolume(newctx context.Context, req *csi.C
 
 	return &csi.CreateVolumeResponse{
 		Volume: &csi.Volume{
-			VolumeId:      volID,
-			CapacityBytes: int64(scaleVol.VolSize), // #nosec G115 -- false positive
-			//CapacityBytes: capacity,
+			VolumeId: volID,
+			//CapacityBytes: int64(scaleVol.VolSize) // #nosec G115 -- false positive
+			CapacityBytes: req.GetCapacityRange().GetRequiredBytes(),
 			VolumeContext: req.GetParameters(),
 			ContentSource: volSrc,
 		},
@@ -1409,7 +1409,7 @@ func (cs *ScaleControllerServer) setScaleVolume(ctx context.Context, req *csi.Cr
 	}
 	klog.Info("filesystem details", filesystemdetails)
 	blockinfo := filesystemdetails.Block.BlockSize
-	roundedblock := int64(math.Round(float64(volSize) / float64(blockinfo)))
+	roundedblock := int64(math.Floor(float64(volSize) / float64(blockinfo)))
 	volSize = roundedblock * int64(blockinfo)
 
 	// #nosec G115 -- false positive
@@ -4069,7 +4069,7 @@ func (cs *ScaleControllerServer) ControllerExpandVolume(ctx context.Context, req
 		return nil, status.Error(codes.Internal, fmt.Sprintf("ControllerExpandVolume - unable to get filesystem details for Filesystem Uid [%v] and clusterId [%v]. Error [%v]", volumeIDMembers.FsUUID, volumeIDMembers.ClusterId, err))
 	}
 	blockinfo := filesystemdetails.Block.BlockSize
-	roundedblock := uint64(math.Round(float64(capacity) / float64(blockinfo)))
+	roundedblock := uint64(math.Floor(float64(capacity) / float64(blockinfo)))
 	capacity = roundedblock * uint64(blockinfo)
 
 	filesetName := volumeIDMembers.FsetName
