@@ -271,7 +271,6 @@ func (cs *ScaleControllerServer) setQuota(ctx context.Context, scVol *scaleVolum
 
 	filesetQuotaBytes, err := ConvertToBytes(quota)
 
-	//filese
 	if err != nil {
 		if strings.Contains(err.Error(), "invalid number specified") {
 			// Invalid number specified means quota is not set
@@ -281,6 +280,7 @@ func (cs *ScaleControllerServer) setQuota(ctx context.Context, scVol *scaleVolum
 		}
 	}
 
+	// changing volsize here for pvc size in decimal units to align with scale block size
 	filesystemname := scVol.VolBackendFs
 	klog.Info("Filesystemname", filesystemname)
 	filesystemdetails, err := cs.Driver.connmap["primary"].GetFilesystemDetails(ctx, filesystemname)
@@ -1194,7 +1194,7 @@ func (cs *ScaleControllerServer) CreateVolume(newctx context.Context, req *csi.C
 			return nil, status.Error(codes.InvalidArgument, "volume range is not provided")
 		}
 		// #nosec G115 -- false positive
-		// // changing capacity here
+		// changing capacity here for pvc size in decimal units to align with scale block size
 		capacity := uint64(capRange.GetRequiredBytes())
 		filesystemname := scaleVol.VolBackendFs
 		filesystemDetails, err := scaleVol.Connector.GetFilesystemDetails(ctx, filesystemname)
@@ -1399,7 +1399,7 @@ func (cs *ScaleControllerServer) setScaleVolume(ctx context.Context, req *csi.Cr
 		isCGVolume = true
 	}
 	scaleVol.VolName = volName
-	//changing the volsize
+	// changing capacity here for pvc size in decimal units to align with scale block size
 	//getting the filesystemname
 	filesystemname := scaleVol.VolBackendFs
 	klog.Info("Filesystemname", filesystemname)
@@ -4062,7 +4062,7 @@ func (cs *ScaleControllerServer) ControllerExpandVolume(ctx context.Context, req
 		klog.Errorf("[%s] ControllerExpandVolume - unable to get filesystem Name for Filesystem Uid [%v] and clusterId [%v]. Error [%v]", loggerId, volumeIDMembers.FsUUID, volumeIDMembers.ClusterId, err)
 		return nil, status.Error(codes.Internal, fmt.Sprintf("ControllerExpandVolume - unable to get filesystem Name for Filesystem Uid [%v] and clusterId [%v]. Error [%v]", volumeIDMembers.FsUUID, volumeIDMembers.ClusterId, err))
 	}
-	//updating the capacity
+	// changing capacity here for pvc size in decimal units to align with scale block size
 	filesystemdetails, err := conn.GetFilesystemDetails(ctx, filesystemName)
 	if err != nil {
 		klog.Errorf("[%s] ControllerExpandVolume - unable to get filesystem details for Filesystem Uid [%v] and clusterId [%v]. Error [%v]", loggerId, volumeIDMembers.FsUUID, volumeIDMembers.ClusterId, err)
